@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏐</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏐</text></svg>">
+
+    <title>Sorteador Vôlei Pro</title>
+    <style>
+        :root {
+            --primary: #007bff;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #f39c12;
+            --bg: #f0f4f8;
+            --card: #ffffff;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            padding: 20px; 
+            background-color: var(--bg); 
+            color: #333; 
+            margin: 0;
+        }
+
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
+        
+        #contador-geral { 
+            text-align: center; 
+            color: #666; 
+            font-weight: bold; 
+            margin-bottom: 30px; 
+            font-size: 1.1rem;
+        }
+
+        .grid-inputs { 
+            display: flex; 
+            gap: 20px; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            max-width: 1200px;
+            margin: 0 auto 30px auto;
+        }
+
+        .coluna-input { 
+            flex: 1; 
+            min-width: 300px; 
+            max-width: 380px; 
+            background: var(--card); 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+
+        h3 { 
+            margin-top: 0; 
+            border-bottom: 2px solid #eee; 
+            padding-bottom: 10px; 
+            text-align: center; 
+            font-size: 1.2rem;
+        }
+
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 10px 0; 
+            border: 2px solid #ddd; 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            transition: border-color 0.3s;
+        }
+
+        input:focus { border-color: var(--primary); outline: none; }
+
+        .stars-container { 
+            display: flex; 
+            gap: 8px; 
+            justify-content: center; 
+            margin-bottom: 15px; 
+        }
+
+        .star { 
+            font-size: 32px; 
+            cursor: pointer; 
+            color: #ccc; 
+            transition: transform 0.1s, color 0.2s; 
+        }
+
+        .star:active { transform: scale(1.2); }
+        .star.active { color: var(--warning); }
+
+        .btn-add { 
+            width: 100%; 
+            padding: 10px; 
+            background-color: var(--primary); 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: background 0.2s;
+        }
+
+        .btn-add:hover { background-color: #0056b3; }
+
+        .lista-jogadores { margin-top: 20px; max-height: 250px; overflow-y: auto; }
+        
+        .player-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 8px 12px; 
+            background: #f9f9f9; 
+            border-radius: 6px; 
+            margin-bottom: 6px; 
+            border: 1px solid #eee;
+            font-size: 0.95rem;
+        }
+
+        .btn-remove { 
+            background: var(--danger); 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            padding: 2px 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+        }
+
+        .acoes-finais { text-align: center; margin-top: 20px; }
+
+        .btn-sortear { 
+            width: 300px; 
+            padding: 15px; 
+            background-color: var(--success); 
+            color: white; 
+            font-size: 1.2rem; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+            margin-bottom: 10px;
+        }
+
+        .btn-limpar { 
+            width: 300px; 
+            padding: 10px; 
+            background-color: transparent; 
+            color: var(--danger); 
+            border: 1px solid var(--danger); 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: normal;
+        }
+
+        .btn-limpar:hover { background: #fff1f1; }
+
+        .time-card { 
+            background: white; 
+            border-left: 10px solid var(--success); 
+            padding: 20px; 
+            margin: 15px auto; 
+            border-radius: 8px; 
+            max-width: 600px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+        }
+        
+        .time-card ul { list-style: none; padding: 0; }
+        .time-card li { padding: 5px 0; border-bottom: 1px solid #eee; }
+        .forca-total { float: right; font-weight: bold; color: var(--success); }
+    </style>
+</head>
+<body>
+
+    <h1>🏐 Sorteador Vôlei Pro</h1>
+    <div id="contador-geral">Total de jogadores: 0</div>
+
+    <div class="grid-inputs">
+        <div class="coluna-input">
+            <h3>LEVANTADORES</h3>
+            <input type="text" id="nomeLevantador" placeholder="Nome do Levantador" onkeydown="checkEnter(event, 'Levantador')">
+            <div class="stars-container" id="starsLevantador"></div>
+            <button class="btn-add" onclick="add('Levantador')">Adicionar</button>
+            <div id="listaLevantador" class="lista-jogadores"></div>
+        </div>
+
+        <div class="coluna-input">
+            <h3>ATACANTES</h3>
+            <input type="text" id="nomeAtacante" placeholder="Nome do Atacante" onkeydown="checkEnter(event, 'Atacante')">
+            <div class="stars-container" id="starsAtacante"></div>
+            <button class="btn-add" onclick="add('Atacante')">Adicionar</button>
+            <div id="listaAtacante" class="lista-jogadores"></div>
+        </div>
+
+        <div class="coluna-input">
+            <h3>DEMAIS JOGADORES</h3>
+            <input type="text" id="nomeDemais" placeholder="Nome do Jogador" onkeydown="checkEnter(event, 'Demais')">
+            <div class="stars-container" id="starsDemais"></div>
+            <button class="btn-add" onclick="add('Demais')">Adicionar</button>
+            <div id="listaDemais" class="lista-jogadores"></div>
+        </div>
+    </div>
+
+    <div class="acoes-finais">
+        <button class="btn-sortear" onclick="sortear()">SORTEAR TIMES</button><br>
+        <button class="btn-limpar" onclick="limparTudo()">Limpar Toda a Lista</button>
+    </div>
+
+    <div id="resultado"></div>
+
+    <script>
+        let jogadores = [];
+        let niveisAtuais = { Levantador: 3, Atacante: 3, Demais: 3 };
+
+        function renderizarEstrelas() {
+            const funcoes = ['Levantador', 'Atacante', 'Demais'];
+            funcoes.forEach(f => {
+                const container = document.getElementById(`stars${f}`);
+                container.innerHTML = "";
+                for (let i = 1; i <= 5; i++) {
+                    const activeClass = i <= niveisAtuais[f] ? "active" : "";
+                    container.innerHTML += `<span class="star ${activeClass}" onclick="setRating('${f}', ${i})">★</span>`;
+                }
+            });
+        }
+
+        function setRating(funcao, valor) {
+            niveisAtuais[funcao] = valor;
+            renderizarEstrelas();
+            document.getElementById(`nome${funcao}`).focus();
+        }
+
+        function checkEnter(event, funcao) {
+            if (event.key === "Enter") add(funcao);
+        }
+
+        function add(funcao) {
+            const input = document.getElementById(`nome${funcao}`);
+            const nome = input.value.trim();
+            if (!nome) return;
+
+            jogadores.push({
+                id: Date.now(),
+                nome: nome,
+                funcao: funcao,
+                nivel: niveisAtuais[funcao]
+            });
+
+            input.value = '';
+            input.focus();
+            atualizarListasVisuais();
+        }
+
+        function removerJogador(id) {
+            jogadores = jogadores.filter(j => j.id !== id);
+            atualizarListasVisuais();
+        }
+
+        function limparTudo() {
+            if (jogadores.length === 0) return;
+            if (confirm("Deseja apagar todos os jogadores cadastrados?")) {
+                jogadores = [];
+                atualizarListasVisuais();
+                document.getElementById('resultado').innerHTML = "";
+            }
+        }
+
+        function atualizarListasVisuais() {
+            document.getElementById('contador-geral').innerText = `Total de jogadores: ${jogadores.length}`;
+
+            const funcoes = ['Levantador', 'Atacante', 'Demais'];
+            funcoes.forEach(f => {
+                const container = document.getElementById(`lista${f}`);
+                container.innerHTML = "";
+                jogadores.filter(j => j.funcao === f).forEach(j => {
+                    container.innerHTML += `
+                        <div class="player-item">
+                            <span>${j.nome} <strong>(${j.nivel}★)</strong></span>
+                            <button class="btn-remove" onclick="removerJogador(${j.id})">-</button>
+                        </div>`;
+                });
+            });
+        }
+
+        function sortear() {
+            const totalTimes = Math.floor(jogadores.length / 6);
+            if (totalTimes < 1) return alert("Precisa de no mínimo 6 jogadores!");
+
+            let levs = jogadores.filter(j => j.funcao === 'Levantador').sort((a,b) => b.nivel - a.nivel);
+            let atacs = jogadores.filter(j => j.funcao === 'Atacante').sort((a,b) => b.nivel - a.nivel);
+            let outros = jogadores.filter(j => j.funcao === 'Demais').sort((a,b) => b.nivel - a.nivel);
+
+            if (levs.length < totalTimes || atacs.length < totalTimes) {
+                return alert(`Faltam especialistas! Para ${totalTimes} times, cadastre ${totalTimes} Levantador(es) e ${totalTimes} Atacante(s).`);
+            }
+
+            let times = Array.from({ length: totalTimes }, () => ({ lista: [], soma: 0 }));
+            levs.slice(0, totalTimes).forEach((j, i) => alocar(times[i], j));
+            atacs.slice(0, totalTimes).forEach((j, i) => alocar(times[totalTimes - 1 - i], j));
+
+            let resto = [...levs.slice(totalTimes), ...atacs.slice(totalTimes), ...outros].sort((a,b) => b.nivel - a.nivel);
+            resto.forEach(j => {
+                times.sort((a, b) => a.soma - b.soma);
+                let timeComVaga = times.find(t => t.lista.length < 6);
+                if (timeComVaga) alocar(timeComVaga, j);
+            });
+
+            mostrarResultado(times);
+        }
+
+        function alocar(time, jogador) {
+            time.lista.push(jogador);
+            time.soma += jogador.nivel;
+        }
+
+        function mostrarResultado(times) {
+            const res = document.getElementById('resultado');
+            res.innerHTML = "<h2>Times Formados</h2>";
+            times.forEach((t, i) => {
+                let html = `
+                    <div class="time-card">
+                        <span class="forca-total">Nível Total: ${t.soma}</span>
+                        <strong>TIME ${i+1}</strong>
+                        <ul>`;
+                t.lista.forEach(j => {
+                    html += `<li>${j.nome} <small>(${j.funcao} - ${j.nivel}★)</small></li>`;
+                });
+                html += `</ul></div>`;
+                res.innerHTML += html;
+            });
+            res.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        renderizarEstrelas();
+    </script>
+</body>
+</html>
