@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sorteador Vôlei Pro - Balanceado</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏐</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏐</text></svg>">
+
+    <title>Sorteador Vôlei Pro</title>
     <style>
         :root {
             --primary: #007bff;
@@ -24,7 +28,6 @@
 
         h1 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
         
-        /* Estilo do Contador de Jogadores */
         #contador-geral { 
             text-align: center; 
             color: #666; 
@@ -268,7 +271,6 @@
         }
 
         function atualizarListasVisuais() {
-            // Atualiza o contador de jogadores abaixo do título
             document.getElementById('contador-geral').innerText = `Total de jogadores: ${jogadores.length}`;
 
             const funcoes = ['Levantador', 'Atacante', 'Demais'];
