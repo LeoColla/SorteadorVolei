@@ -16,6 +16,7 @@
             --warning: #f39c12;
             --bg: #f0f4f8;
             --card: #ffffff;
+            --waiting: #6c757d;
         }
 
         body { 
@@ -71,7 +72,6 @@
             border-radius: 6px; 
             box-sizing: border-box; 
             font-size: 16px; 
-            transition: border-color 0.3s;
         }
 
         input:focus { border-color: var(--primary); outline: none; }
@@ -87,10 +87,9 @@
             font-size: 32px; 
             cursor: pointer; 
             color: #ccc; 
-            transition: transform 0.1s, color 0.2s; 
+            transition: 0.2s; 
         }
 
-        .star:active { transform: scale(1.2); }
         .star.active { color: var(--warning); }
 
         .btn-add { 
@@ -102,10 +101,7 @@
             border-radius: 6px; 
             font-weight: bold; 
             cursor: pointer; 
-            transition: background 0.2s;
         }
-
-        .btn-add:hover { background-color: #0056b3; }
 
         .lista-jogadores { margin-top: 20px; max-height: 250px; overflow-y: auto; }
         
@@ -118,7 +114,16 @@
             border-radius: 6px; 
             margin-bottom: 6px; 
             border: 1px solid #eee;
-            font-size: 0.95rem;
+        }
+
+        /* Estilo das estrelas dentro da lista */
+        .mini-star {
+            cursor: pointer;
+            color: #ccc;
+            font-size: 18px;
+        }
+        .mini-star.active {
+            color: var(--warning);
         }
 
         .btn-remove { 
@@ -128,7 +133,6 @@
             border-radius: 4px; 
             padding: 2px 8px; 
             cursor: pointer; 
-            font-weight: bold; 
         }
 
         .acoes-finais { text-align: center; margin-top: 20px; }
@@ -155,10 +159,7 @@
             border: 1px solid var(--danger); 
             border-radius: 8px; 
             cursor: pointer; 
-            font-weight: normal;
         }
-
-        .btn-limpar:hover { background: #fff1f1; }
 
         .time-card { 
             background: white; 
@@ -169,10 +170,38 @@
             max-width: 600px; 
             box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
         }
+
+        .waiting-card {
+            background: #f8f9fa;
+            border-left: 10px solid var(--waiting);
+            padding: 20px;
+            margin: 15px auto;
+            border-radius: 8px;
+            max-width: 600px;
+            border-top: 1px solid #ddd;
+        }
         
-        .time-card ul { list-style: none; padding: 0; }
-        .time-card li { padding: 5px 0; border-bottom: 1px solid #eee; }
+        .time-card ul, .waiting-card ul { list-style: none; padding: 0; }
+        .time-card li, .waiting-card li { padding: 5px 0; border-bottom: 1px solid #eee; }
         .forca-total { float: right; font-weight: bold; color: var(--success); }
+
+        /* AJUSTE PARA O ÍCONE DE COPIAR */
+        .header-resultado {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .btn-copy-icon {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            padding: 5px;
+            transition: transform 0.2s;
+        }
+        .btn-copy-icon:active { transform: scale(1.3); }
     </style>
 </head>
 <body>
@@ -207,7 +236,7 @@
     </div>
 
     <div class="acoes-finais">
-        <button class="btn-sortear" onclick="sortear()">SORTEAR TIMES</button><br>
+        <button id="btnSortearPrincipal" class="btn-sortear" onclick="sortear()">SORTEAR TIMES</button><br>
         <button class="btn-limpar" onclick="limparTudo()">Limpar Toda a Lista</button>
     </div>
 
@@ -216,10 +245,23 @@
     <script>
         let jogadores = [];
         let niveisAtuais = { Levantador: 3, Atacante: 3, Demais: 3 };
+        let ultimoSorteio = { times: [], espera: [] }; // Guarda o sorteio para copiar
+
+        window.onload = function() {
+            const salvos = localStorage.getItem('listaJogadoresVolei');
+            if (salvos) {
+                jogadores = JSON.parse(salvos);
+                atualizarListasVisuais();
+            }
+            renderizarEstrelas();
+        };
+
+        function salvarDados() {
+            localStorage.setItem('listaJogadoresVolei', JSON.stringify(jogadores));
+        }
 
         function renderizarEstrelas() {
-            const funcoes = ['Levantador', 'Atacante', 'Demais'];
-            funcoes.forEach(f => {
+            ['Levantador', 'Atacante', 'Demais'].forEach(f => {
                 const container = document.getElementById(`stars${f}`);
                 container.innerHTML = "";
                 for (let i = 1; i <= 5; i++) {
@@ -235,6 +277,15 @@
             document.getElementById(`nome${funcao}`).focus();
         }
 
+        function updatePlayerLevel(id, novoNivel) {
+            const index = jogadores.findIndex(j => j.id === id);
+            if (index !== -1) {
+                jogadores[index].nivel = novoNivel;
+                salvarDados();
+                atualizarListasVisuais();
+            }
+        }
+
         function checkEnter(event, funcao) {
             if (event.key === "Enter") add(funcao);
         }
@@ -243,21 +294,16 @@
             const input = document.getElementById(`nome${funcao}`);
             const nome = input.value.trim();
             if (!nome) return;
-
-            jogadores.push({
-                id: Date.now(),
-                nome: nome,
-                funcao: funcao,
-                nivel: niveisAtuais[funcao]
-            });
-
+            jogadores.push({ id: Date.now(), nome: nome, funcao: funcao, nivel: niveisAtuais[funcao] });
             input.value = '';
             input.focus();
+            salvarDados();
             atualizarListasVisuais();
         }
 
         function removerJogador(id) {
             jogadores = jogadores.filter(j => j.id !== id);
+            salvarDados();
             atualizarListasVisuais();
         }
 
@@ -265,6 +311,7 @@
             if (jogadores.length === 0) return;
             if (confirm("Deseja apagar todos os jogadores cadastrados?")) {
                 jogadores = [];
+                localStorage.removeItem('listaJogadoresVolei');
                 atualizarListasVisuais();
                 document.getElementById('resultado').innerHTML = "";
             }
@@ -272,15 +319,22 @@
 
         function atualizarListasVisuais() {
             document.getElementById('contador-geral').innerText = `Total de jogadores: ${jogadores.length}`;
-
-            const funcoes = ['Levantador', 'Atacante', 'Demais'];
-            funcoes.forEach(f => {
+            ['Levantador', 'Atacante', 'Demais'].forEach(f => {
                 const container = document.getElementById(`lista${f}`);
                 container.innerHTML = "";
                 jogadores.filter(j => j.funcao === f).forEach(j => {
+                    let estrelasHTML = '';
+                    for (let i = 1; i <= 5; i++) {
+                        const active = i <= j.nivel ? 'active' : '';
+                        estrelasHTML += `<span class="mini-star ${active}" onclick="updatePlayerLevel(${j.id}, ${i})">★</span>`;
+                    }
+
                     container.innerHTML += `
                         <div class="player-item">
-                            <span>${j.nome} <strong>(${j.nivel}★)</strong></span>
+                            <div>
+                                <span>${j.nome}</span><br>
+                                <div class="mini-stars-container">${estrelasHTML}</div>
+                            </div>
                             <button class="btn-remove" onclick="removerJogador(${j.id})">-</button>
                         </div>`;
                 });
@@ -288,29 +342,40 @@
         }
 
         function sortear() {
-            const totalTimes = Math.floor(jogadores.length / 6);
-            if (totalTimes < 1) return alert("Precisa de no mínimo 6 jogadores!");
+            const areaResultado = document.getElementById('resultado');
+            if (areaResultado.innerHTML !== "" && !confirm("Deseja sortear novamente?")) return;
 
-            let levs = jogadores.filter(j => j.funcao === 'Levantador').sort((a,b) => b.nivel - a.nivel);
-            let atacs = jogadores.filter(j => j.funcao === 'Atacante').sort((a,b) => b.nivel - a.nivel);
-            let outros = jogadores.filter(j => j.funcao === 'Demais').sort((a,b) => b.nivel - a.nivel);
+            const totalTimes = Math.floor(jogadores.length / 6);
+            if (totalTimes < 1) return alert("Mínimo de 6 jogadores!");
+
+            let levs = jogadores.filter(j => j.funcao === 'Levantador').sort(() => Math.random() - 0.5);
+            let atacs = jogadores.filter(j => j.funcao === 'Atacante').sort(() => Math.random() - 0.5);
+            let demais = jogadores.filter(j => j.funcao === 'Demais').sort(() => Math.random() - 0.5);
 
             if (levs.length < totalTimes || atacs.length < totalTimes) {
-                return alert(`Faltam especialistas! Para ${totalTimes} times, cadastre ${totalTimes} Levantador(es) e ${totalTimes} Atacante(s).`);
+                return alert(`Faltam especialistas! Mínimo ${totalTimes} Levantador(es) e ${totalTimes} Atacante(s).`);
             }
 
             let times = Array.from({ length: totalTimes }, () => ({ lista: [], soma: 0 }));
+
             levs.slice(0, totalTimes).forEach((j, i) => alocar(times[i], j));
             atacs.slice(0, totalTimes).forEach((j, i) => alocar(times[totalTimes - 1 - i], j));
 
-            let resto = [...levs.slice(totalTimes), ...atacs.slice(totalTimes), ...outros].sort((a,b) => b.nivel - a.nivel);
-            resto.forEach(j => {
+            let sobraEspecialistas = [...levs.slice(totalTimes), ...atacs.slice(totalTimes)];
+            let poolRestante = [...sobraEspecialistas, ...demais].sort(() => Math.random() - 0.5);
+
+            let vagasAbertas = (totalTimes * 6) - (totalTimes * 2);
+            let queVaoJogar = poolRestante.slice(0, vagasAbertas);
+            let paraEspera = poolRestante.slice(vagasAbertas);
+
+            queVaoJogar.sort((a,b) => b.nivel - a.nivel).forEach(j => {
                 times.sort((a, b) => a.soma - b.soma);
                 let timeComVaga = times.find(t => t.lista.length < 6);
                 if (timeComVaga) alocar(timeComVaga, j);
             });
 
-            mostrarResultado(times);
+            ultimoSorteio = { times: times, espera: paraEspera }; // Salva para copiar
+            mostrarResultado(times, paraEspera);
         }
 
         function alocar(time, jogador) {
@@ -318,9 +383,15 @@
             time.soma += jogador.nivel;
         }
 
-        function mostrarResultado(times) {
+        function mostrarResultado(times, espera) {
             const res = document.getElementById('resultado');
-            res.innerHTML = "<h2>Times Formados</h2>";
+            // HEADER COM TÍTULO E ÍCONE
+            res.innerHTML = `
+                <div class="header-resultado">
+                    <h2>Times Formados</h2>
+                    <button class="btn-copy-icon" onclick="copiarWhatsApp()" title="Copiar para WhatsApp">📋</button>
+                </div>`;
+            
             times.forEach((t, i) => {
                 let html = `
                     <div class="time-card">
@@ -328,15 +399,49 @@
                         <strong>TIME ${i+1}</strong>
                         <ul>`;
                 t.lista.forEach(j => {
-                    html += `<li>${j.nome} <small>(${j.funcao} - ${j.nivel}★)</small></li>`;
+                    html += `<li>${j.nome} <strong>(${j.nivel}★)</strong> - <small>${j.funcao}</small></li>`;
                 });
                 html += `</ul></div>`;
                 res.innerHTML += html;
             });
+
+            if (espera.length > 0) {
+                let htmlEspera = `<div class="waiting-card"><strong>⏳ JOGADORES NA ESPERA (${espera.length})</strong><ul>`;
+                espera.forEach(j => {
+                    htmlEspera += `<li>${j.nome} <strong>(${j.nivel}★)</strong> - <small>${j.funcao}</small></li>`;
+                });
+                htmlEspera += `</ul></div>`;
+                res.innerHTML += htmlEspera;
+            }
             res.scrollIntoView({ behavior: 'smooth' });
         }
 
-        renderizarEstrelas();
+        function copiarWhatsApp() {
+            if (ultimoSorteio.times.length === 0) return;
+            
+            let texto = "*🏐 TIMES SORTEADOS - VÔLEI SKOL*\n\n";
+            
+            ultimoSorteio.times.forEach((t, i) => {
+                texto += `*TIME ${i+1} (Força: ${t.soma})*\n`;
+                t.lista.forEach(j => {
+                    texto += `- ${j.nome} (${j.nivel}★)\n`;
+                });
+                texto += `\n`;
+            });
+
+            if (ultimoSorteio.espera.length > 0) {
+                texto += `*⏳ EM ESPERA:*\n`;
+                ultimoSorteio.espera.forEach(j => {
+                    texto += `- ${j.nome} (${j.nivel}★)\n`;
+                });
+            }
+
+            navigator.clipboard.writeText(texto).then(() => {
+                alert("Times copiados com sucesso! Agora é só colar no WhatsApp.");
+            }).catch(err => {
+                alert("Erro ao copiar: ", err);
+            });
+        }
     </script>
 </body>
 </html>
